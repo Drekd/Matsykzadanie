@@ -1,11 +1,11 @@
 import json
-from datetime import datetime
 from django.http import JsonResponse
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from .models import User, MuscleGroup, Workout, WorkoutStats
 from .forms import UserForm, MuscleGroupForm, WorkoutForm
+
 
 def to_dict(obj, fields):
     result = {}
@@ -22,28 +22,22 @@ def parse_body(request):
         return {}
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["GET", "POST"]), name='dispatch')
 class UserListView(View):
-
-
     def get(self, request):
-        return JsonResponse(
-            [to_dict(u, ['id', 'name', 'created_at']) for u in User.objects.all()],
-            safe=False
-        )
+        users = User.objects.all()
+        return JsonResponse([to_dict(u, ['id', 'name', 'created_at']) for u in users], safe=False)
 
     def post(self, request):
-        data = parse_body(request)
-        form = UserForm(data)
+        form = UserForm(parse_body(request))
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
         u = form.save()
         return JsonResponse(to_dict(u, ['id', 'name', 'created_at']), status=201)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["GET", "PUT", "DELETE"]), name='dispatch')
 class UserDetailView(View):
-
     def get(self, request, user_id):
         try:
             u = User.objects.get(id=user_id)
@@ -56,9 +50,7 @@ class UserDetailView(View):
             u = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return JsonResponse({"error": "Не найден"}, status=404)
-
-        data = parse_body(request)
-        form = UserForm(data, instance=u)
+        form = UserForm(parse_body(request), instance=u)
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
         form.save()
@@ -73,27 +65,22 @@ class UserDetailView(View):
         return JsonResponse({"status": "удалён"})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["GET", "POST"]), name='dispatch')
 class MuscleGroupListView(View):
-
     def get(self, request):
-        return JsonResponse(
-            [to_dict(m, ['id', 'name', 'body_part']) for m in MuscleGroup.objects.all()],
-            safe=False
-        )
+        groups = MuscleGroup.objects.all()
+        return JsonResponse([to_dict(m, ['id', 'name', 'body_part']) for m in groups], safe=False)
 
     def post(self, request):
-        data = parse_body(request)
-        form = MuscleGroupForm(data)
+        form = MuscleGroupForm(parse_body(request))
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
         m = form.save()
         return JsonResponse(to_dict(m, ['id', 'name', 'body_part']), status=201)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["GET", "PUT", "DELETE"]), name='dispatch')
 class MuscleGroupDetailView(View):
-
     def get(self, request, group_id):
         try:
             m = MuscleGroup.objects.get(id=group_id)
@@ -106,9 +93,7 @@ class MuscleGroupDetailView(View):
             m = MuscleGroup.objects.get(id=group_id)
         except MuscleGroup.DoesNotExist:
             return JsonResponse({"error": "Не найден"}, status=404)
-
-        data = parse_body(request)
-        form = MuscleGroupForm(data, instance=m)
+        form = MuscleGroupForm(parse_body(request), instance=m)
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
         form.save()
@@ -123,31 +108,22 @@ class MuscleGroupDetailView(View):
         return JsonResponse({"status": "удалён"})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["GET", "POST"]), name='dispatch')
 class WorkoutListView(View):
-
     def get(self, request):
-        return JsonResponse(
-            [to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date'])
-             for w in Workout.objects.all()],
-            safe=False
-        )
+        workouts = Workout.objects.all()
+        return JsonResponse([to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts], safe=False)
 
     def post(self, request):
-        data = parse_body(request)
-        form = WorkoutForm(data)
+        form = WorkoutForm(parse_body(request))
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
         w = form.save()
-        return JsonResponse(
-            to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']),
-            status=201
-        )
+        return JsonResponse(to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']), status=201)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["GET", "PUT", "DELETE"]), name='dispatch')
 class WorkoutDetailView(View):
-
     def get(self, request, workout_id):
         try:
             w = Workout.objects.get(id=workout_id)
@@ -160,9 +136,7 @@ class WorkoutDetailView(View):
             w = Workout.objects.get(id=workout_id)
         except Workout.DoesNotExist:
             return JsonResponse({"error": "Не найден"}, status=404)
-
-        data = parse_body(request)
-        form = WorkoutForm(data, instance=w)
+        form = WorkoutForm(parse_body(request), instance=w)
         if not form.is_valid():
             return JsonResponse({"errors": form.errors}, status=400)
         form.save()
@@ -177,49 +151,42 @@ class WorkoutDetailView(View):
         return JsonResponse({"status": "удалён"})
 
 
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class WorkoutByDateView(View):
     def get(self, request, date):
         workouts = Workout.objects.filter(date__date=date)
-        return JsonResponse(
-            [to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts],
-            safe=False
-        )
+        return JsonResponse([to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts], safe=False)
 
 
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class WorkoutByUserView(View):
     def get(self, request, user_id):
         workouts = Workout.objects.filter(user_id=user_id)
-        return JsonResponse(
-            [to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts],
-            safe=False
-        )
+        return JsonResponse([to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts], safe=False)
 
 
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class WorkoutByMuscleView(View):
     def get(self, request, group_id):
         workouts = Workout.objects.filter(muscle_groups_id=group_id)
-        return JsonResponse(
-            [to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts],
-            safe=False
-        )
+        return JsonResponse([to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']) for w in workouts], safe=False)
 
 
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class StatsTotalView(View):
     def get(self, request, user_id):
         cnt = Workout.objects.filter(user_id=user_id).count()
         return JsonResponse({"user_id": user_id, "total_workouts": cnt})
 
 
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class StatsByUserView(View):
     def get(self, request, user_id):
         stats = WorkoutStats.objects.filter(user_id=user_id)
-        return JsonResponse(
-            [to_dict(s, ['id', 'user_id', 'muscle_group', 'last_date', 'total'])
-             for s in stats],
-            safe=False
-        )
+        return JsonResponse([to_dict(s, ['id', 'user_id', 'muscle_group', 'last_date', 'total']) for s in stats], safe=False)
 
 
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class StatsRegularityView(View):
     def get(self, request):
         result = {}
@@ -233,7 +200,7 @@ class StatsRegularityView(View):
         return JsonResponse(result)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(require_http_methods(["POST"]), name='dispatch')
 class StatsUpdateView(View):
     def post(self, request):
         WorkoutStats.objects.all().delete()
