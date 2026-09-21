@@ -36,7 +36,7 @@ class UserListView(View):
         return JsonResponse(to_dict(u, ['id', 'name', 'created_at']), status=201)
 
 
-@method_decorator(require_http_methods(["GET", "PUT", "DELETE"]), name='dispatch')
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class UserDetailView(View):
     def get(self, request, user_id):
         try:
@@ -44,25 +44,6 @@ class UserDetailView(View):
         except User.DoesNotExist:
             return JsonResponse({"error": "Не найден"}, status=404)
         return JsonResponse(to_dict(u, ['id', 'name', 'created_at']))
-
-    def put(self, request, user_id):
-        try:
-            u = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Не найден"}, status=404)
-        form = UserForm(parse_body(request), instance=u)
-        if not form.is_valid():
-            return JsonResponse({"errors": form.errors}, status=400)
-        form.save()
-        return JsonResponse(to_dict(u, ['id', 'name', 'created_at']))
-
-    def delete(self, request, user_id):
-        try:
-            u = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Не найден"}, status=404)
-        u.delete()
-        return JsonResponse({"status": "удалён"})
 
 
 @method_decorator(require_http_methods(["GET", "POST"]), name='dispatch')
@@ -79,7 +60,7 @@ class MuscleGroupListView(View):
         return JsonResponse(to_dict(m, ['id', 'name', 'body_part']), status=201)
 
 
-@method_decorator(require_http_methods(["GET", "PUT", "DELETE"]), name='dispatch')
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class MuscleGroupDetailView(View):
     def get(self, request, group_id):
         try:
@@ -87,25 +68,6 @@ class MuscleGroupDetailView(View):
         except MuscleGroup.DoesNotExist:
             return JsonResponse({"error": "Не найден"}, status=404)
         return JsonResponse(to_dict(m, ['id', 'name', 'body_part']))
-
-    def put(self, request, group_id):
-        try:
-            m = MuscleGroup.objects.get(id=group_id)
-        except MuscleGroup.DoesNotExist:
-            return JsonResponse({"error": "Не найден"}, status=404)
-        form = MuscleGroupForm(parse_body(request), instance=m)
-        if not form.is_valid():
-            return JsonResponse({"errors": form.errors}, status=400)
-        form.save()
-        return JsonResponse(to_dict(m, ['id', 'name', 'body_part']))
-
-    def delete(self, request, group_id):
-        try:
-            m = MuscleGroup.objects.get(id=group_id)
-        except MuscleGroup.DoesNotExist:
-            return JsonResponse({"error": "Не найден"}, status=404)
-        m.delete()
-        return JsonResponse({"status": "удалён"})
 
 
 @method_decorator(require_http_methods(["GET", "POST"]), name='dispatch')
@@ -122,7 +84,7 @@ class WorkoutListView(View):
         return JsonResponse(to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']), status=201)
 
 
-@method_decorator(require_http_methods(["GET", "PUT", "DELETE"]), name='dispatch')
+@method_decorator(require_http_methods(["GET"]), name='dispatch')
 class WorkoutDetailView(View):
     def get(self, request, workout_id):
         try:
@@ -130,25 +92,6 @@ class WorkoutDetailView(View):
         except Workout.DoesNotExist:
             return JsonResponse({"error": "Не найден"}, status=404)
         return JsonResponse(to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']))
-
-    def put(self, request, workout_id):
-        try:
-            w = Workout.objects.get(id=workout_id)
-        except Workout.DoesNotExist:
-            return JsonResponse({"error": "Не найден"}, status=404)
-        form = WorkoutForm(parse_body(request), instance=w)
-        if not form.is_valid():
-            return JsonResponse({"errors": form.errors}, status=400)
-        form.save()
-        return JsonResponse(to_dict(w, ['id', 'user_id', 'muscle_groups_id', 'date']))
-
-    def delete(self, request, workout_id):
-        try:
-            w = Workout.objects.get(id=workout_id)
-        except Workout.DoesNotExist:
-            return JsonResponse({"error": "Не найден"}, status=404)
-        w.delete()
-        return JsonResponse({"status": "удалён"})
 
 
 @method_decorator(require_http_methods(["GET"]), name='dispatch')
